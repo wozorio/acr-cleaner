@@ -23,4 +23,22 @@ which are older than a specified period of time (in days) if they are not being 
 
 ```bash
 Usage: acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
+
+Arguments:
+    REGISTRY_NAME              The name of the container registry
+    REGISTRY_RESOURCE_GROUP    The resource group where the container registry is deployed
+    MAX_IMAGE_AGE              The max age (in days) an image can have
+    DEPLOYED_IMAGES            A comma-separated list of images that are currently deployed (in use). These will be handled as exceptions
+                               and therefore they will not be deleted even if they are older than the `MAX_IMAGE_AGE` argument
+```
+
+## Hints
+
+The list of images currently deployed to the K8s cluster can be fetched with:
+```bash
+kubectl get pods \
+    --all-namespaces \
+    --output jsonpath='{range .items[*]}{range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
+    | grep <REGISTRY_NAME> \
+    | uniq >deployed_images.txt
 ```
