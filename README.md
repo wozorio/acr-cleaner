@@ -32,9 +32,10 @@ Arguments:
                                and therefore they will not be deleted even if they are older than the `MAX_IMAGE_AGE` argument
 ```
 
-## Hints
+## Get list of images in use
 
-The list of images currently deployed to the K8s cluster can be fetched with:
+A list of images currently deployed to the K8s cluster can be fetched with:
+
 ```bash
 kubectl get pods \
     --all-namespaces \
