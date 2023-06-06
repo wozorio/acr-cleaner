@@ -1,5 +1,8 @@
 # ACR Cleaner
 
+[![GitHub](https://img.shields.io/github/license/wozorio/acr-cleaner)](https://github.com/wozorio/acr-cleaner/blob/main/LICENSE)
+[![CI](https://github.com/wozorio/acr-cleaner/actions/workflows/ci.yml/badge.svg)](https://github.com/wozorio/acr-cleaner/actions/workflows/ci.yml)
+
 A script to clean up an Azure container registry by deleting dangling images and images 
 which are older than a specified period of time (in days) if they are not being used.
 
