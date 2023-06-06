@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4.6.0
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          ./install-requirements.sh
+          pip install pylint
+
+      - name: Run pylint
+        run: find . -type f -name "*.py" | xargs pylint
