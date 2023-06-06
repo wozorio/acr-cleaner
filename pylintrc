@@ -1,3 +1,9 @@
 [MAIN]
+
 max-line-length=125
 fail-under=9.5
+
+[MESSAGES CONTROL]
+
+disable=
+    fixme
