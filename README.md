@@ -3,10 +3,18 @@
 [![GitHub](https://img.shields.io/github/license/wozorio/acr-cleaner)](https://github.com/wozorio/acr-cleaner/blob/main/LICENSE)
 [![CI](https://github.com/wozorio/acr-cleaner/actions/workflows/ci.yml/badge.svg)](https://github.com/wozorio/acr-cleaner/actions/workflows/ci.yml)
 
-A script to clean up an Azure container registry by deleting dangling images and images 
-which are older than a specified period of time (in days) if they are not being used.
+## Description
 
-## Prerequisites
+A script to clean up an Azure container registry by deleting dangling images and images which are older than a specified period of time (in days) if they are not being used.
+It was tested and validated against container registries with single-architecture images.
+
+### Built With
+
+Python 3.11.2
+
+## Getting Started
+
+### Prerequisites
 
 1. Ensure the following environment variables are set:
     ```bash
@@ -22,7 +30,7 @@ which are older than a specified period of time (in days) if they are not being 
     $ pip install -r requirements.txt
     ```
 
-## Usage
+### Usage
 
 ```bash
 Usage: acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
@@ -35,7 +43,7 @@ Arguments:
                                and therefore they will not be deleted even if they are older than the `MAX_IMAGE_AGE` argument
 ```
 
-## Get list of images in use
+### Get List Of Images In Use
 
 A list of images currently deployed to the K8s cluster can be fetched with:
 
