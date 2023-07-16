@@ -30,6 +30,18 @@ Python 3.11.2
     $ pip install -r requirements.txt
     ```
 
+1. Get list of images in use
+
+    A list of images currently deployed to the K8s cluster can be fetched with:
+
+    ```bash
+    kubectl get pods \
+      --all-namespaces \
+      --output jsonpath='{range .items[*]} {range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
+    | grep <REGISTRY_NAME> \
+    | uniq >deployed_images.txt
+    ```
+
 ### Usage
 
 ```bash
@@ -41,16 +53,4 @@ Arguments:
     MAX_IMAGE_AGE              The max age (in days) an image can have
     DEPLOYED_IMAGES            A comma-separated list of images that are currently deployed (in use). These will be handled as exceptions
                                and therefore they will not be deleted even if they are older than the `MAX_IMAGE_AGE` argument
-```
-
-### Get List Of Images In Use
-
-A list of images currently deployed to the K8s cluster can be fetched with:
-
-```bash
-kubectl get pods \
-    --all-namespaces \
-    --output jsonpath='{range .items[*]}{range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
-    | grep <REGISTRY_NAME> \
-    | uniq >deployed_images.txt
 ```
