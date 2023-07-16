@@ -16,7 +16,7 @@ Python 3.11.2
 
 ### Prerequisites
 
-1. Ensure the following environment variables are set:
+1. Set the following environment variables:
     ```bash
     $ export AZURE_CLIENT_ID=<AZURE_CLIENT_ID>
     $ export AZURE_CLIENT_SECRET=<AZURE_CLIENT_SECRET>
@@ -25,15 +25,11 @@ Python 3.11.2
     ```
 
 1. Install requirements:
-
     ```bash
     $ pip install -r requirements.txt
     ```
 
-1. Get list of images in use
-
-    A list of images currently deployed to the K8s cluster can be fetched with:
-
+1. Get a list of images in use:
     ```bash
     kubectl get pods \
       --all-namespaces \
