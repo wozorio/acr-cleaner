@@ -1,4 +1,4 @@
-azure-containerregistry==1.1.0
+azure-containerregistry==1.2.0
 azure-identity==1.13.0
 colorlog==6.7.0
 humanize==4.7.0
