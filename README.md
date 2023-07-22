@@ -16,7 +16,7 @@ Python 3.11.2
 
 ### Prerequisites
 
-1. Set the following environment variables:
+1. Set environment variables:
     ```bash
     $ export AZURE_CLIENT_ID=<AZURE_CLIENT_ID>
     $ export AZURE_CLIENT_SECRET=<AZURE_CLIENT_SECRET>
