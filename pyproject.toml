@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "acr-cleaner"
+version = "0.1.0"
+description = ""
+authors = ["Wellington Ozorio <well.ozorio@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+azure-containerregistry = "^1.2.0"
+azure-identity = "^1.14.0"
+colorlog = "^6.7.0"
+humanize = "^4.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
