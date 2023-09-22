@@ -26,7 +26,8 @@ Python 3.11.2
 
 1. Install requirements:
     ```bash
-    $ pip install -r requirements.txt
+    $ pip install poetry
+    $ poetry install
     ```
 
 1. Get a list of images in use:
@@ -41,7 +42,7 @@ Python 3.11.2
 ### Usage
 
 ```bash
-Usage: acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
+Usage: poetry run acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
 
 Arguments:
     REGISTRY_NAME              The name of the container registry
