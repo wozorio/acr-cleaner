@@ -18,16 +18,16 @@ Python 3.11.2
 
 1. Set environment variables:
     ```bash
-    $ export AZURE_CLIENT_ID=<AZURE_CLIENT_ID>
-    $ export AZURE_CLIENT_SECRET=<AZURE_CLIENT_SECRET>
-    $ export AZURE_TENANT_ID=<AZURE_TENANT_ID>
-    $ export AZURE_SUBSCRIPTION_ID=<AZURE_SUBSCRIPTION_ID>
+    export AZURE_CLIENT_ID=<AZURE_CLIENT_ID>
+    export AZURE_CLIENT_SECRET=<AZURE_CLIENT_SECRET>
+    export AZURE_TENANT_ID=<AZURE_TENANT_ID>
+    export AZURE_SUBSCRIPTION_ID=<AZURE_SUBSCRIPTION_ID>
     ```
 
 1. Install requirements:
     ```bash
-    $ pip install poetry
-    $ poetry install
+    pip install poetry
+    poetry install
     ```
 
 1. Get a list of images in use:
