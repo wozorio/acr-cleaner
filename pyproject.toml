@@ -13,7 +13,7 @@ colorlog = "^6.7.0"
 humanize = "^4.8.0"
 
 
-[tool.poetry.group.test.dependencies]
+[tool.poetry.group.dev.dependencies]
 pylint = "^2.17.5"
 
 [build-system]
