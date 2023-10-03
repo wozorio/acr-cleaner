@@ -32,4 +32,4 @@ jobs:
           poetry install --no-interaction --no-root
 
       - name: Run pylint
-        run: poetry run pylint acr_cleaner.py
+        run: poetry run pylint *.py
