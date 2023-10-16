@@ -2,7 +2,7 @@
 
 """ACR cleaner
 
-A script to clean up an Azure container registry by deleting dangling images and images 
+A script to clean up an Azure container registry by deleting dangling images and images
 which are older than a specified period of time (in days) if they are not being used.
 """
 
@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+from ast import literal_eval
 
 import humanize
 from azure.containerregistry import ArtifactManifestOrder, ContainerRegistryClient
@@ -36,10 +37,6 @@ AUDIENCE = "https://management.azure.com"
 # is triggered, a job will also be running to ensure the respective image is not incorrectly deleted.
 REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen"]
 
-# TODO: Remove this exception when the bug in the `list_manifest_properties` method is fixed:
-# https://github.com/Azure/azure-sdk-for-python/issues/28469
-REPOS_WITH_OCI_IMAGES = ["kubereboot/kured", "stakater/reloader"]
-
 logger = logging.getLogger(__name__)
 
 
@@ -57,6 +54,7 @@ class Arguments:
     registry_resource_group: str
     max_image_age_days: int
     deployed_images: list[str]
+    cleanup_all: bool
 
 
 @dataclasses.dataclass
@@ -83,14 +81,20 @@ def main(args: list[str], environ: dict) -> None | int:
 
     registry_uri = f"https://{args.registry_name}.azurecr.io"
 
+    if args.cleanup_all:
+        logger.warning("All images except the currently deployed ones will be deleted")
+        max_image_age_days = 0
+    else:
+        max_image_age_days = args.max_image_age_days
+
     logger.warning(
         "Dangling images and unused images older than %i days will be deleted from the %s container registry",
-        args.max_image_age_days,
+        max_image_age_days,
         registry_uri,
     )
 
     with ContainerRegistryClient(registry_uri, EnvironmentCredential(), audience=AUDIENCE) as acr_client:
-        obsolete_images = fetch_obsolete_images(acr_client, registry_uri, args.max_image_age_days, args.deployed_images)
+        obsolete_images = fetch_obsolete_images(acr_client, registry_uri, max_image_age_days, args.deployed_images)
 
         if not obsolete_images:
             logger.info("No obsolete images found for deletion")
@@ -134,12 +138,14 @@ def setup_logging() -> None:
 
 def parse_args(args: list[str], environ: dict) -> Arguments:
     """Parse command-line arguments."""
-    if len(args) != 4 or "-h" in args or "--help" in args:
-        print("Usage: cleanup_acr.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES", file=sys.stderr)
+    if len(args) != 5 or "-h" in args or "--help" in args:
+        print(
+            "Usage: cleanup_acr.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES CLEANUP_ALL",
+            file=sys.stderr,
+        )
         return
 
     check_env_vars(environ)
-
     args = Arguments(
         azure_client_id=environ["AZURE_CLIENT_ID"],
         azure_client_secret=environ["AZURE_CLIENT_SECRET"],
@@ -149,6 +155,7 @@ def parse_args(args: list[str], environ: dict) -> Arguments:
         registry_resource_group=args[1],
         max_image_age_days=int(args[2]),
         deployed_images=args[3].split(","),
+        cleanup_all=literal_eval(args[4]),
     )
 
     for image_id in args.deployed_images:
@@ -273,7 +280,7 @@ def run_os_command(cmd: list[str]) -> str:
     return output.strip()
 
 
-def delete_obsolete_images(acr_client: ContainerRegistryClient, obsolete_images: list[str]) -> None:
+def delete_obsolete_images(acr_client: ContainerRegistryClient, obsolete_images: list[Image]) -> None:
     """Delete all obsolete images passed in with the `obsolete_images` parameter."""
     for image in obsolete_images:
         logger.warning(
@@ -288,11 +295,7 @@ def delete_obsolete_images(acr_client: ContainerRegistryClient, obsolete_images:
 
 def is_exception_repository(repository: str) -> bool:
     """Check whether a repository should be an exception or not."""
-    return (
-        repository.startswith("helm-charts")
-        or (repository in REPOS_WITH_OCI_IMAGES)
-        or (repository in REPOS_WITH_JOB_IMAGES)
-    )
+    return repository.startswith("helm-charts") or (repository in REPOS_WITH_JOB_IMAGES)
 
 
 def validate_image_id(image_id: str) -> None:
