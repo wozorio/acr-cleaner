@@ -40,6 +40,7 @@ REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen"]
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class Arguments:
     """Represent the required environment variables and arguments passed from the command-line."""
@@ -68,7 +69,7 @@ class Image:
     is_dangling: bool = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
-        self.is_dangling = True if self.tags is None else False
+        self.is_dangling = bool(self.tags)
 
 
 def main(args: list[str], environ: dict) -> None | int:
@@ -98,7 +99,7 @@ def main(args: list[str], environ: dict) -> None | int:
 
         if not obsolete_images:
             logger.info("No obsolete images found for deletion")
-            return
+            return None
 
         dangling_images = [image for image in obsolete_images if image.is_dangling]
         unused_images = [image for image in obsolete_images if not image.is_dangling]
@@ -119,6 +120,7 @@ def main(args: list[str], environ: dict) -> None | int:
             humanize.naturalsize(storage_released),
             args.registry_name,
         )
+    return None
 
 
 def setup_logging() -> None:
@@ -136,14 +138,14 @@ def setup_logging() -> None:
     logger.setLevel("INFO")
 
 
-def parse_args(args: list[str], environ: dict) -> Arguments:
+def parse_args(args: list[str], environ: dict) -> None | Arguments:
     """Parse command-line arguments."""
     if len(args) != 5 or "-h" in args or "--help" in args:
         print(
             "Usage: cleanup_acr.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES CLEANUP_ALL",
             file=sys.stderr,
         )
-        return
+        return None
 
     check_env_vars(environ)
     args = Arguments(
