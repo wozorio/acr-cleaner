@@ -72,7 +72,6 @@ class Image:
         self.is_dangling = bool(self.tags)
 
 
-# pylint: disable=inconsistent-return-statements
 def main(args: list[str], environ: dict) -> None | int:
     """The main function."""
     setup_logging()
