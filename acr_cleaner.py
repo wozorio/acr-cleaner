@@ -138,14 +138,14 @@ def setup_logging() -> None:
     logger.setLevel("INFO")
 
 
-def parse_args(args: list[str], environ: dict) -> Arguments:
+def parse_args(args: list[str], environ: dict) -> None | Arguments:
     """Parse command-line arguments."""
     if len(args) != 5 or "-h" in args or "--help" in args:
         print(
             "Usage: cleanup_acr.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES CLEANUP_ALL",
             file=sys.stderr,
         )
-        return
+        return None
 
     check_env_vars(environ)
     args = Arguments(
