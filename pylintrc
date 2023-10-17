@@ -1,6 +1,5 @@
 [MAIN]
 max-line-length=125
-fail-under=9.6
 
 [MESSAGES CONTROL]
 disable=
