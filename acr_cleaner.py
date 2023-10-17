@@ -40,6 +40,7 @@ REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen"]
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class Arguments:
     """Represent the required environment variables and arguments passed from the command-line."""
@@ -71,6 +72,7 @@ class Image:
         self.is_dangling = True if self.tags is None else False
 
 
+# pylint: disable=inconsistent-return-statements
 def main(args: list[str], environ: dict) -> None | int:
     """The main function."""
     setup_logging()
