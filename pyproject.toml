@@ -10,7 +10,7 @@ python = "^3.10"
 azure-containerregistry = "^1.2.0"
 azure-identity = "^1.15.0"
 colorlog = "^6.7.0"
-humanize = "^4.8.0"
+humanize = "^4.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
