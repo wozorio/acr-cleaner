@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.10"
 azure-containerregistry = "^1.2.0"
 azure-identity = "^1.15.0"
-colorlog = "^6.7.0"
+colorlog = "^6.8.0"
 humanize = "^4.9.0"
 
 
