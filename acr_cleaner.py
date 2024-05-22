@@ -69,7 +69,7 @@ class Image:
     is_dangling: bool = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
-        self.is_dangling = bool(self.tags)
+        self.is_dangling = self.tags is None
 
 
 def main(args: list[str], environ: dict) -> None | int:
@@ -297,7 +297,9 @@ def delete_obsolete_images(acr_client: ContainerRegistryClient, obsolete_images:
 
 def is_exception_repository(repository: str) -> bool:
     """Check whether a repository should be an exception or not."""
-    return repository.startswith("helm-charts") or (repository in REPOS_WITH_JOB_IMAGES)
+    return (
+        repository.startswith("helm-charts") or repository.startswith("e2e-tests") or (repository in REPOS_WITH_JOB_IMAGES)
+    )
 
 
 def validate_image_id(image_id: str) -> None:
