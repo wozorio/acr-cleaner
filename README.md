@@ -29,12 +29,15 @@ It was tested and validated against container registries with single-architectur
    ```
 
 1. Get a list of images in use:
+
    ```bash
-   kubectl get pods \
-     --all-namespaces \
-     --output jsonpath='{range .items[*]} {range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
-   | grep <REGISTRY_NAME> \
-   | uniq >deployed_images.txt
+   mapfile -t DEPLOYED_IMAGES <<<"$(kubectl get pods \
+      --all-namespaces \
+      --output jsonpath='{range .items[*]}{range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
+      | grep <REGISTRY_NAME> | sort | uniq)"
+
+   # Convert the array to a CSV "list" which can then passed as input to the ACR cleaner script
+   DEPLOYED_IMAGES_CSV=$(IFS=','; echo "${DEPLOYED_IMAGES[*]}")
    ```
 
 ### Usage
