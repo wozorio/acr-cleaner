@@ -36,7 +36,7 @@ It was tested and validated against container registries with single-architectur
       --output jsonpath='{range .items[*]}{range .status.containerStatuses[*]}{.imageID}{"\n"}{end}' \
       | grep <REGISTRY_NAME> | sort | uniq)"
 
-   # Convert the array to a CSV "list" which can then passed as input to the ACR cleaner script
+   # Convert the array to a CSV "list" which can then be passed as input to the ACR cleaner script
    DEPLOYED_IMAGES_CSV=$(IFS=','; echo "${DEPLOYED_IMAGES[*]}")
    ```
 
