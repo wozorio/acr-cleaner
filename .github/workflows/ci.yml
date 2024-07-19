@@ -48,8 +48,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changed-dirs
     strategy:
+      fail-fast: false
       matrix:
-        dirs: ${{ needs.changed-dirs.outputs.dirs }}
+        include: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
     steps:
       - name: Setup Poetry
         uses: snok/install-poetry@v1
