@@ -9,36 +9,7 @@ defaults:
     shell: bash
 
 jobs:
-  dirs:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Find Changed Directories
-        id: find-changed-dirs
-        run: |
-          echo "Changed directories:"
-          CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '/' | awk 'BEGIN {FS="/"} {print $1}' | uniq)
-          echo $CHANGED_DIRS
-          echo "::set-output name=dirs::$CHANGED_DIRS"
-
-      - name: Set Matrix for Changed Directories
-        id: set-matrix
-        run: |
-          MATRIX_JSON="{\"include\": ["
-          for DIR in ${{ steps.find-changed-dirs.outputs.dirs }}; do
-            if [ -f "$DIR/pyproject.toml" ]; then
-              MATRIX_JSON+="{\"dir\": \"$DIR\"},"
-            fi
-          done
-          MATRIX_JSON=$(echo $MATRIX_JSON | sed 's/,$//')
-          MATRIX_JSON+="]}"
-          echo "::set-output name=matrix::$MATRIX_JSON"
-
   lint:
-    needs: dirs
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -50,6 +21,11 @@ jobs:
         uses: actions/setup-python@v5.1.1
         with:
           python-version: "3.10"
+
+      - uses: tj-actions/changed-files@v44
+        id: changed-files
+        with:
+          dir_names: true
 
       - name: Setup Poetry
         uses: snok/install-poetry@v1
