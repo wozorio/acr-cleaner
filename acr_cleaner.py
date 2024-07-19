@@ -18,7 +18,7 @@ import subprocess
 import sys
 from ast import literal_eval
 
-import humanize
+import humanizew
 from azure.containerregistry import ArtifactManifestOrder, ContainerRegistryClient
 from azure.identity import EnvironmentCredential
 from colorlog import ColoredFormatter
