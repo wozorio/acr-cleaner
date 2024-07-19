@@ -36,6 +36,7 @@ jobs:
         with:
           dir_names: true
           base_sha: ${{ steps.last_successful_commit_pull_request.outputs.base }}
+          matrix: true
 
       - name: List all changed files
         env:
@@ -49,7 +50,8 @@ jobs:
     needs: changed-dirs
     strategy:
       fail-fast: false
-      matrix: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
+      matrix:
+        dirs: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
     steps:
       - name: Setup Poetry
         uses: snok/install-poetry@v1
