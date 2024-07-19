@@ -10,7 +10,7 @@ It was tested and validated against container registries with single-architectur
 
 ## Getting Started
 
-### Prerequisites
+### Prerequisitese
 
 1. Set environment variables:
 
