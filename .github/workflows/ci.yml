@@ -16,11 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5.1.1
-        with:
-          python-version: "3.10"
-
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5
@@ -38,13 +33,6 @@ jobs:
           base_sha: ${{ steps.last_successful_commit_pull_request.outputs.base }}
           matrix: true
 
-      - name: List all changed files
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files-base-sha-pull-request.outputs.all_changed_files }}
-        run: |
-          for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
-          done
   lint:
     runs-on: ubuntu-latest
     needs: changed-dirs
@@ -53,6 +41,13 @@ jobs:
       matrix:
         dirs: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: "3.10"
+
       - name: Setup Poetry
         uses: snok/install-poetry@v1
         with:
