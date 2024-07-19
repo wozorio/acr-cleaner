@@ -49,8 +49,7 @@ jobs:
     needs: changed-dirs
     strategy:
       fail-fast: false
-      matrix:
-        include: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
+      matrix: ${{fromJson(needs.changed-dirs.outputs.dirs)}}
     steps:
       - name: Setup Poetry
         uses: snok/install-poetry@v1
