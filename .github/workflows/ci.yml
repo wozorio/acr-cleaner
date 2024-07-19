@@ -11,9 +11,6 @@ defaults:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{fromJson(needs.lint.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,8 +31,7 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Install dependencies and Run pylint in ${{ matrix.dir }}
+      - name: Install dependencies and Run pylint
         run: |
-          cd ${{ matrix.dir }}
           poetry install --no-interaction --no-root
           poetry run pylint *.py
