@@ -62,5 +62,6 @@ jobs:
 
       - name: Install dependencies and Run pylint
         run: |
+          cd ${{ matrix.dirs }}
           poetry install --no-interaction --no-root
           poetry run pylint *.py
