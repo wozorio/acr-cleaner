@@ -9,9 +9,40 @@ defaults:
     shell: bash
 
 jobs:
-  lint:
-    name: Lint
+  dirs:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find Changed Directories
+        id: find-changed-dirs
+        run: |
+          echo "Changed directories:"
+          CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '/' | awk 'BEGIN {FS="/"} {print $1}' | uniq)
+          echo $CHANGED_DIRS
+          echo "::set-output name=dirs::$CHANGED_DIRS"
+
+      - name: Set Matrix for Changed Directories
+        id: set-matrix
+        run: |
+          MATRIX_JSON="{\"include\": ["
+          for DIR in ${{ steps.find-changed-dirs.outputs.dirs }}; do
+            if [ -f "$DIR/pyproject.toml" ]; then
+              MATRIX_JSON+="{\"dir\": \"$DIR\"},"
+            fi
+          done
+          MATRIX_JSON=$(echo $MATRIX_JSON | sed 's/,$//')
+          MATRIX_JSON+="]}"
+          echo "::set-output name=matrix::$MATRIX_JSON"
+
+  lint:
+    needs: dirs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.lint.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,9 +58,8 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Install dependencies
+      - name: Install dependencies and Run pylint in ${{ matrix.dir }}
         run: |
+          cd ${{ matrix.dir }}
           poetry install --no-interaction --no-root
-
-      - name: Run pylint
-        run: poetry run pylint *.py
+          poetry run pylint *.py
