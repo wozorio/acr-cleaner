@@ -24,6 +24,12 @@ jobs:
         with:
           dir_names: true
 
+      - name: List changed files
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          echo "List all the files that have changed: $ALL_CHANGED_FILES"
+
       - name: Setup Poetry
         uses: snok/install-poetry@v1
         with:
