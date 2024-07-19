@@ -19,14 +19,26 @@ jobs:
         with:
           python-version: "3.10"
 
-      - uses: tj-actions/changed-files@v44
-        id: changed-files
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5
+
+      - uses: nrwl/nx-set-shas@v3
+        id: last_successful_commit_pull_request
+        with:
+          main-branch-name: ${{ steps.branch-name.outputs.base_ref_branch }} # Get the last successful commit on the master or main branch
+          workflow_id: "test.yml"
+
+      - name: Run changed-files with the commit of the last successful test workflow run on the main branch
+        id: changed-files-base-sha-pull-request
+        uses: tj-actions/changed-files@v44
         with:
           dir_names: true
+          base_sha: ${{ steps.last_successful_commit_pull_request.outputs.base }}
 
       - name: List all changed files
         env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          ALL_CHANGED_FILES: ${{ steps.changed-files-base-sha-pull-request.all_changed_files }}
         run: |
           for file in ${ALL_CHANGED_FILES}; do
             echo "$file was changed"
