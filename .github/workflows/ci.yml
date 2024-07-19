@@ -35,9 +35,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ matrix.dirs}}
+
     needs: changed-dirs
     strategy:
       fail-fast: false
@@ -53,8 +51,11 @@ jobs:
 
       - name: Setup Poetry
         uses: snok/install-poetry@v1
+        with:
+          working-directory: ${{ matrix.dirs }}
 
       - name: Install dependencies and Run pylint
         run: |
           poetry install --no-interaction --no-root
           poetry run pylint *.py
+        working-directory: ${{ matrix.dirs}}
