@@ -56,6 +56,5 @@ jobs:
         run: |
           ls -lha
           poetry install --no-interaction --no-root
-          poetry env info
           poetry run pylint *.py
         working-directory: ${{ matrix.dirs}}
