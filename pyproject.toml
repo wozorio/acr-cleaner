@@ -15,7 +15,7 @@ humanize = "^4.10.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pylint = "^3.2.7"
+pylint = "^3.3.0"
 
 [build-system]
 requires = ["poetry-core"]
