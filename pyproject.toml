@@ -10,7 +10,7 @@ package-mode = false
 python = "^3.10"
 azure-containerregistry = "^1.2.0"
 azure-identity = "^1.19.0"
-colorlog = "^6.8.2"
+colorlog = "^6.9.0"
 humanize = "^4.11.0"
 
 
