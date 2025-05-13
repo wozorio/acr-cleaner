@@ -352,14 +352,14 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "humanize"
-version = "4.12.2"
+version = "4.12.3"
 description = "Python humanize utilities"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "humanize-4.12.2-py3-none-any.whl", hash = "sha256:e4e44dced598b7e03487f3b1c6fd5b1146c30ea55a110e71d5d4bca3e094259e"},
-    {file = "humanize-4.12.2.tar.gz", hash = "sha256:ce0715740e9caacc982bb89098182cf8ded3552693a433311c6a4ce6f4e12a2c"},
+    {file = "humanize-4.12.3-py3-none-any.whl", hash = "sha256:2cbf6370af06568fa6d2da77c86edb7886f3160ecd19ee1ffef07979efc597f6"},
+    {file = "humanize-4.12.3.tar.gz", hash = "sha256:8430be3a615106fdfceb0b2c1b41c4c98c6b0fc5cc59663a5539b111dd325fb0"},
 ]
 
 [package.extras]
@@ -674,4 +674,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "fc9041cdeac5b08ffa3ca30bd96e4e2099b8814b4e19f303e70893b84d31c928"
+content-hash = "42d82f6977874d4c68f88ba1b5dbf5366ae7d11559d2e5c9f7c2f452dcdbcad8"
