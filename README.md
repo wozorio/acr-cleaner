@@ -6,7 +6,7 @@
 ## Description
 
 A script to clean up an Azure container registry by deleting dangling images and images which are older than a specified period of time (in days) if they are not being used.
-It was tested and validated against container registries with single-architecture images.
+It has been tested and validated against container registries with single-architecture images.
 
 ## Getting Started
 
@@ -21,11 +21,10 @@ It was tested and validated against container registries with single-architectur
    export AZURE_SUBSCRIPTION_ID=<AZURE_SUBSCRIPTION_ID>
    ```
 
-1. Install requirements:
+1. Install uv:
 
    ```bash
-   pip install poetry
-   poetry install --without dev
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 1. Get a list of images in use:
@@ -43,7 +42,7 @@ It was tested and validated against container registries with single-architectur
 ### Usage
 
 ```bash
-Usage: poetry run acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
+Usage: ./acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
 
 Arguments:
     REGISTRY_NAME              The name of the container registry

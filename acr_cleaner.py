@@ -1,10 +1,17 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "azure-containerregistry",
+#     "azure-identity",
+#     "click",
+#     "colorlog",
+#     "humanize",
+# ]
+# ///
 
-"""ACR cleaner
-
-A script to clean up an Azure container registry by deleting dangling images and images
-which are older than a specified period of time (in days) if they are not being used.
-"""
+# pylint: disable=missing-module-docstring
 
 __author__ = "Wellington Ozorio <well.ozorio@gmail.com>"
 
@@ -15,9 +22,8 @@ import logging
 import os
 import re
 import subprocess
-import sys
-from ast import literal_eval
 
+import click
 import humanize
 from azure.containerregistry import ArtifactManifestOrder, ContainerRegistryClient
 from azure.identity import EnvironmentCredential
@@ -35,27 +41,9 @@ AUDIENCE = "https://management.azure.com"
 # jobs only exist when the job is running.
 # Since jobs are triggered based on events, it's very unlikely that when the registry cleanup script
 # is triggered, a job will also be running to ensure the respective image is not incorrectly deleted.
-REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen"]
+REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen", "multiarch/qemu-user-static", "busybox"]
 
 logger = logging.getLogger(__name__)
-
-
-# pylint: disable=too-many-instance-attributes
-@dataclasses.dataclass
-class Arguments:
-    """Represent the required environment variables and arguments passed from the command-line."""
-
-    # Environment variables
-    azure_client_id: str
-    azure_client_secret: str
-    azure_tenant_id: str
-    azure_subscription_id: str
-    # Positional arguments
-    registry_name: str
-    registry_resource_group: str
-    max_image_age_days: int
-    deployed_images: list[str]
-    cleanup_all: bool
 
 
 @dataclasses.dataclass
@@ -72,21 +60,36 @@ class Image:
         self.is_dangling = self.tags is None
 
 
-def main(args: list[str], environ: dict) -> None | int:
-    """The main function."""
+def validate_image_ids(value: str) -> list[str]:
+    """Click custom parameter type to validate the format of provided image IDs."""
+    images = value.split(",")
+    for image in images:
+        validate_image_id(image)
+    return images
+
+
+@click.command()
+@click.argument("registry_name")
+@click.argument("registry_resource_group")
+@click.argument("max_image_age_days", type=int)
+@click.argument("deployed_images", type=validate_image_ids)
+@click.argument("cleanup_all", type=bool)
+def main(
+    registry_name: str, registry_resource_group: str, max_image_age_days: int, deployed_images: list[str], cleanup_all: bool
+) -> None:
+    """
+    A script to clean up Azure container registries by deleting dangling images and images
+    which are older than a specified period of time (in days) if they are not being used.
+    """
     setup_logging()
 
-    args = parse_args(args, environ)
-    if args is None:
-        return 1
+    check_env_vars(os.environ)
 
-    registry_uri = f"https://{args.registry_name}.azurecr.io"
+    registry_uri = f"https://{registry_name}.azurecr.io"
 
-    if args.cleanup_all:
+    if cleanup_all:
         logger.warning("All images except the currently deployed ones will be deleted")
         max_image_age_days = 0
-    else:
-        max_image_age_days = args.max_image_age_days
 
     logger.warning(
         "Dangling images and unused images older than %i days will be deleted from the %s container registry",
@@ -95,11 +98,11 @@ def main(args: list[str], environ: dict) -> None | int:
     )
 
     with ContainerRegistryClient(registry_uri, EnvironmentCredential(), audience=AUDIENCE) as acr_client:
-        obsolete_images = fetch_obsolete_images(acr_client, registry_uri, max_image_age_days, args.deployed_images)
+        obsolete_images = fetch_obsolete_images(acr_client, registry_uri, max_image_age_days, deployed_images)
 
         if not obsolete_images:
             logger.info("No obsolete images found for deletion")
-            return None
+            return
 
         dangling_images = [image for image in obsolete_images if image.is_dangling]
         unused_images = [image for image in obsolete_images if not image.is_dangling]
@@ -107,20 +110,24 @@ def main(args: list[str], environ: dict) -> None | int:
         logger.warning("A total of %s dangling images will be deleted", humanize.intcomma(len(dangling_images)))
         logger.warning("A total of %s unused images will be deleted", humanize.intcomma(len(unused_images)))
 
-        login_to_azure(args.azure_client_id, args.azure_client_secret, args.azure_tenant_id, args.azure_subscription_id)
+        login_to_azure(
+            os.environ["AZURE_CLIENT_ID"],
+            os.environ["AZURE_CLIENT_SECRET"],
+            os.environ["AZURE_TENANT_ID"],
+            os.environ["AZURE_SUBSCRIPTION_ID"],
+        )
 
-        registry_usage_before_cleanup = get_registry_usage(args.registry_name, args.registry_resource_group)
+        registry_usage_before_cleanup = get_registry_usage(registry_name, registry_resource_group)
         delete_obsolete_images(acr_client, obsolete_images)
-        registry_usage_after_cleanup = get_registry_usage(args.registry_name, args.registry_resource_group)
+        registry_usage_after_cleanup = get_registry_usage(registry_name, registry_resource_group)
 
         storage_released = registry_usage_before_cleanup - registry_usage_after_cleanup
 
         logger.info(
             "A total of %s has been released from the %s container registry",
             humanize.naturalsize(storage_released),
-            args.registry_name,
+            registry_name,
         )
-    return None
 
 
 def setup_logging() -> None:
@@ -136,34 +143,6 @@ def setup_logging() -> None:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel("INFO")
-
-
-def parse_args(args: list[str], environ: dict) -> None | Arguments:
-    """Parse command-line arguments."""
-    if len(args) != 5 or "-h" in args or "--help" in args:
-        print(
-            "Usage: cleanup_acr.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES CLEANUP_ALL",
-            file=sys.stderr,
-        )
-        return None
-
-    check_env_vars(environ)
-    args = Arguments(
-        azure_client_id=environ["AZURE_CLIENT_ID"],
-        azure_client_secret=environ["AZURE_CLIENT_SECRET"],
-        azure_subscription_id=environ["AZURE_SUBSCRIPTION_ID"],
-        azure_tenant_id=environ["AZURE_TENANT_ID"],
-        registry_name=args[0],
-        registry_resource_group=args[1],
-        max_image_age_days=int(args[2]),
-        deployed_images=args[3].split(","),
-        cleanup_all=literal_eval(args[4]),
-    )
-
-    for image_id in args.deployed_images:
-        validate_image_id(image_id)
-
-    return args
 
 
 def check_env_vars(environ: dict) -> None:
@@ -307,8 +286,9 @@ def validate_image_id(image_id: str) -> None:
     match = IMAGE_ID_PATTERN.match(image_id)
 
     if not match:
-        raise RuntimeError(f"Image URI format {image_id} is not valid")
+        raise ValueError(f"Image URI format {image_id} is not valid")
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:], os.environ) or 0)
+    # pylint: disable=no-value-for-parameter
+    main()
