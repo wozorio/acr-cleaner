@@ -24,9 +24,9 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv pip install pylint
-          # TODO: installation of "dev" dependencies should be improved
+          # TODO: installation of dependencies should be improved
           # after support for TOML files for scripts is added.
           # Ref.: https://github.com/astral-sh/uv/issues/5903
+          uv pip install pylint
           uv pip install azure-containerregistry azure-identity click colorlog humanize
           uv run pylint *.py
