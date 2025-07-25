@@ -21,7 +21,7 @@ It was tested and validated against container registries with single-architectur
    export AZURE_SUBSCRIPTION_ID=<AZURE_SUBSCRIPTION_ID>
    ```
 
-1. Install requirements:
+1. Install uv:
 
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
