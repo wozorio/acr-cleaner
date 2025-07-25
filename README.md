@@ -24,8 +24,7 @@ It was tested and validated against container registries with single-architectur
 1. Install requirements:
 
    ```bash
-   pip install poetry
-   poetry install --without dev
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 1. Get a list of images in use:
@@ -43,7 +42,7 @@ It was tested and validated against container registries with single-architectur
 ### Usage
 
 ```bash
-Usage: poetry run acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
+Usage: ./acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
 
 Arguments:
     REGISTRY_NAME              The name of the container registry
