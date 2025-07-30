@@ -13,7 +13,7 @@
 
 # pylint: disable=missing-module-docstring
 
-__author__ = "Wellington Ozorio <well.ozorio@gmail.com>"
+__author__ = "Wellington Ozorio <wozorio@duck.com>"
 
 
 import dataclasses
@@ -291,4 +291,5 @@ def validate_image_id(image_id: str) -> None:
 
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
+    main()
     main()
