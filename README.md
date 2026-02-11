@@ -41,7 +41,7 @@ It has been tested and validated against container registries with single-archit
 
 ### Usage
 
-```bash
+```
 Usage: ./acr_cleaner.py REGISTRY_NAME REGISTRY_RESOURCE_GROUP MAX_IMAGE_AGE DEPLOYED_IMAGES
 
 Arguments:
