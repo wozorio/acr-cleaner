@@ -26,6 +26,7 @@ import subprocess
 import click
 import humanize
 from azure.containerregistry import ArtifactManifestOrder, ContainerRegistryClient
+from azure.core.exceptions import AzureError
 from azure.identity import EnvironmentCredential
 from colorlog import ColoredFormatter
 
@@ -175,8 +176,8 @@ def expand_deployed_image_ids(acr_client: ContainerRegistryClient, deployed_imag
         digest = match.group("digest")
         try:
             result = acr_client.get_manifest(repository, digest)
-        except Exception:  # pylint: disable=broad-except
-            logger.debug("Failed to retrieve manifest %s from repository %s", digest, repository)
+        except AzureError as exc:
+            logger.debug("Failed to retrieve manifest %s from repository %s: %s", digest, repository, exc)
             continue
         if result.media_type not in MANIFEST_LIST_MEDIA_TYPES:
             continue
