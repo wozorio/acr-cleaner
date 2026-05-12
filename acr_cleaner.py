@@ -37,6 +37,11 @@ IMAGE_ID_PATTERN = re.compile(
 
 AUDIENCE = "https://management.azure.com"
 
+MANIFEST_LIST_MEDIA_TYPES = [
+    "application/vnd.docker.distribution.manifest.list.v2+json",
+    "application/vnd.oci.image.index.v1+json",
+]
+
 # Repositories containing images that are used by jobs are set as exceptions because pods created by
 # jobs only exist when the job is running.
 # Since jobs are triggered based on events, it's very unlikely that when the registry cleanup script
@@ -152,6 +157,17 @@ def check_env_vars(environ: dict) -> None:
             raise RuntimeError(f"{variable} environment variable not set")
 
 
+def get_arm64_digest(acr_client: ContainerRegistryClient, repository: str, digest: str) -> str | None:
+    """Return the arm64-specific digest from a manifest list, or None if not applicable."""
+    result = acr_client.get_manifest(repository, digest)
+    if result.media_type not in MANIFEST_LIST_MEDIA_TYPES:
+        return None
+    for platform_manifest in result.manifest.get("manifests", []):
+        if platform_manifest.get("platform", {}).get("architecture") == "arm64":
+            return platform_manifest["digest"]
+    return None
+
+
 def fetch_obsolete_images(
     acr_client: ContainerRegistryClient, registry_uri: str, max_image_age_days: int, deployed_images: list[str]
 ) -> list[Image]:
@@ -172,7 +188,9 @@ def fetch_obsolete_images(
                 image_age_days = (today - image_last_update).days
 
                 if manifest.tags is None or (today - image_last_update) > datetime.timedelta(days=max_image_age_days):
-                    image_id = registry_uri.removeprefix("https://") + "/" + repository + "@" + manifest.digest
+                    arm64_digest = get_arm64_digest(acr_client, repository, manifest.digest)
+                    digest = arm64_digest if arm64_digest is not None else manifest.digest
+                    image_id = registry_uri.removeprefix("https://") + "/" + repository + "@" + digest
                     validate_image_id(image_id)
 
                     if image_id in deployed_images:
@@ -180,7 +198,7 @@ def fetch_obsolete_images(
                             Image(
                                 repository=repository,
                                 tags=manifest.tags,
-                                digest=manifest.digest,
+                                digest=digest,
                                 age=image_age_days,
                             )
                         )
@@ -189,7 +207,7 @@ def fetch_obsolete_images(
                             Image(
                                 repository=repository,
                                 tags=manifest.tags,
-                                digest=manifest.digest,
+                                digest=digest,
                                 age=image_age_days,
                             )
                         )
