@@ -157,19 +157,34 @@ def check_env_vars(environ: dict) -> None:
             raise RuntimeError(f"{variable} environment variable not set")
 
 
-def get_arm64_digest(acr_client: ContainerRegistryClient, repository: str, digest: str) -> str | None:
-    """Return the arm64-specific digest from a manifest list, or None if not applicable."""
-    try:
-        result = acr_client.get_manifest(repository, digest)
-    except Exception:  # pylint: disable=broad-except
-        logger.debug("Failed to retrieve manifest %s from repository %s", digest, repository)
-        return None
-    if result.media_type not in MANIFEST_LIST_MEDIA_TYPES:
-        return None
-    for platform_manifest in result.manifest.get("manifests", []):
-        if platform_manifest.get("platform", {}).get("architecture") == "arm64":
-            return platform_manifest.get("digest")
-    return None
+def expand_deployed_image_ids(acr_client: ContainerRegistryClient, deployed_images: list[str]) -> set[str]:
+    """Expand deployed image IDs to also include child architecture manifests referenced by manifest lists.
+
+    When a multi-arch image is deployed, Kubernetes reports the parent manifest list digest as the
+    image ID. The registry also stores individual child manifests (one per architecture) that have no
+    tags of their own. Without this expansion those child manifests would not be found in the
+    deployed_images list and would be incorrectly treated as obsolete.
+    """
+    protected = set(deployed_images)
+    for image_id in deployed_images:
+        match = IMAGE_ID_PATTERN.match(image_id)
+        if not match:
+            continue
+        registry = match.group("registry")
+        repository = match.group("repository")
+        digest = match.group("digest")
+        try:
+            result = acr_client.get_manifest(repository, digest)
+        except Exception:  # pylint: disable=broad-except
+            logger.debug("Failed to retrieve manifest %s from repository %s", digest, repository)
+            continue
+        if result.media_type not in MANIFEST_LIST_MEDIA_TYPES:
+            continue
+        for platform_manifest in result.manifest.get("manifests", []):
+            child_digest = platform_manifest.get("digest")
+            if child_digest:
+                protected.add(f"{registry}/{repository}@{child_digest}")
+    return protected
 
 
 def fetch_obsolete_images(
@@ -178,6 +193,8 @@ def fetch_obsolete_images(
     """Fetch a list of dangling images and unused images which are older than the `max_image_age_days` parameter."""
     images_in_use = []
     obsolete_images = []
+
+    protected_image_ids = expand_deployed_image_ids(acr_client, deployed_images)
 
     logger.info("Fetching list of dangling images and unused images older than %i days:", max_image_age_days)
     for repository in acr_client.list_repository_names():
@@ -192,21 +209,15 @@ def fetch_obsolete_images(
                 image_age_days = (today - image_last_update).days
 
                 if manifest.tags is None or (today - image_last_update) > datetime.timedelta(days=max_image_age_days):
-                    arm64_digest = (
-                        get_arm64_digest(acr_client, repository, manifest.digest)
-                        if manifest.architecture is None
-                        else None
-                    )
-                    digest = arm64_digest if arm64_digest is not None else manifest.digest
-                    image_id = registry_uri.removeprefix("https://") + "/" + repository + "@" + digest
+                    image_id = registry_uri.removeprefix("https://") + "/" + repository + "@" + manifest.digest
                     validate_image_id(image_id)
 
-                    if image_id in deployed_images:
+                    if image_id in protected_image_ids:
                         images_in_use.append(
                             Image(
                                 repository=repository,
                                 tags=manifest.tags,
-                                digest=digest,
+                                digest=manifest.digest,
                                 age=image_age_days,
                             )
                         )
@@ -215,7 +226,7 @@ def fetch_obsolete_images(
                             Image(
                                 repository=repository,
                                 tags=manifest.tags,
-                                digest=digest,
+                                digest=manifest.digest,
                                 age=image_age_days,
                             )
                         )
