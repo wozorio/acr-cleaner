@@ -15,7 +15,6 @@
 
 __author__ = "Wellington Ozorio <wozorio@duck.com>"
 
-
 import dataclasses
 import datetime
 import logging
@@ -41,7 +40,13 @@ AUDIENCE = "https://management.azure.com"
 # jobs only exist when the job is running.
 # Since jobs are triggered based on events, it's very unlikely that when the registry cleanup script
 # is triggered, a job will also be running to ensure the respective image is not incorrectly deleted.
-REPOS_WITH_JOB_IMAGES = ["ingress-nginx/kube-webhook-certgen", "multiarch/qemu-user-static", "busybox"]
+REPOS_WITH_JOB_IMAGES = [
+    "multiarch/qemu-user-static",
+    "busybox",
+    "cert-manager/jetstack/cert-manager-startupapicheck",
+    "trust-manager/jetstack/trust-pkg-debian-bookworm",
+    "linkerd/debug",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -159,23 +164,28 @@ def fetch_obsolete_images(
     images_in_use = []
     obsolete_images = []
 
+    expanded_deployed_images = expand_deployed_images(acr_client, deployed_images)
+
     logger.info("Fetching list of dangling images and unused images older than %i days:", max_image_age_days)
     for repository in acr_client.list_repository_names():
         if not is_exception_repository(repository):
             logger.info("-> Checking repository %s", repository)
-            for manifest in acr_client.list_manifest_properties(
+
+            manifests = acr_client.list_manifest_properties(
                 repository, order_by=ArtifactManifestOrder.LAST_UPDATED_ON_DESCENDING
-            ):
+            )
+
+            for manifest in manifests:
                 today = datetime.datetime.now(datetime.timezone.utc)
                 image_last_update = manifest.last_updated_on
 
                 image_age_days = (today - image_last_update).days
 
                 if manifest.tags is None or (today - image_last_update) > datetime.timedelta(days=max_image_age_days):
-                    image_id = registry_uri.removeprefix("https://") + "/" + repository + "@" + manifest.digest
+                    image_id = f"{registry_uri.removeprefix("https://")}/{repository}@{manifest.digest}"
                     validate_image_id(image_id)
 
-                    if image_id in deployed_images:
+                    if image_id in expanded_deployed_images:
                         images_in_use.append(
                             Image(
                                 repository=repository,
@@ -202,6 +212,36 @@ def fetch_obsolete_images(
             logger.info("%s/%s:%s@%s", registry_uri, image.repository, image.tags, image.digest)
 
     return obsolete_images
+
+
+def expand_deployed_images(acr_client: ContainerRegistryClient, deployed_images: list[str]) -> list[str]:
+    """Expand deployed images to also include child manifests referenced by manifest lists (indexes).
+
+    When a multi-arch image is deployed, Kubernetes reports the parent manifest list (index) digest as the
+    image ID. But the registry also stores individual child manifests (architecture & attestation) that have
+    no tags of their own.
+
+    Without this expansion those child manifests would not be found in the
+    deployed_images list and would be incorrectly treated as obsolete.
+    """
+    logger.info("Expanding deployed images to include child architecture & attestation manifests:")
+    expanded_deployed_images = list(deployed_images)
+
+    for image_id in deployed_images:
+        registry_and_repository, digest = image_id.split("@")
+        _, repository = registry_and_repository.split("/", 1)
+
+        index_manifest = acr_client.get_manifest(repository, digest)
+        child_manifests = index_manifest.manifest.get("manifests", [])
+
+        for child_manifest in child_manifests:
+            child_digest = child_manifest.get("digest")
+            logger.info("-> Child digest %s found for deployed image %s", child_digest, image_id)
+            child_image_id = f"{registry_and_repository}@{child_digest}"
+            validate_image_id(child_image_id)
+            expanded_deployed_images.append(child_image_id)
+
+    return expanded_deployed_images
 
 
 def login_to_azure(client_id: str, client_secret: str, tenant_id: str, subscription_id: str) -> None:
@@ -276,9 +316,7 @@ def delete_obsolete_images(acr_client: ContainerRegistryClient, obsolete_images:
 
 def is_exception_repository(repository: str) -> bool:
     """Check whether a repository should be an exception or not."""
-    return (
-        repository.startswith("helm-charts") or repository.startswith("e2e-tests") or (repository in REPOS_WITH_JOB_IMAGES)
-    )
+    return repository.startswith("e2e-tests") or (repository in REPOS_WITH_JOB_IMAGES)
 
 
 def validate_image_id(image_id: str) -> None:
