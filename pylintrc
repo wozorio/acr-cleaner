@@ -1,6 +1,0 @@
-[MAIN]
-max-line-length=125
-
-[MESSAGES CONTROL]
-disable=
-    fixme
