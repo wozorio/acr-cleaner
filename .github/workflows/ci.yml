@@ -19,14 +19,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: 3.12
+          enable-cache: "false"
 
-      - name: Run pylint
-        run: |
-          uv venv
-          source .venv/bin/activate
-          # TODO: installation of dependencies should be improved
-          # after support for TOML files for scripts is added.
-          # Ref.: https://github.com/astral-sh/uv/issues/5903
-          uv pip install pylint
-          uv pip install azure-containerregistry azure-identity click colorlog humanize
-          uv run pylint *.py
+      - uses: astral-sh/ruff-action@v4.0.0
+      - run: ruff check
