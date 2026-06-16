@@ -5,7 +5,7 @@
 
 ## Description
 
-A script to clean up Azure container registries by deleting dangling images and images which are older than a specified period of time (in days) if they are not being used.
+A script to clean up Azure container registries by deleting unused images older than a specified period of time (in days).
 
 ## Getting Started
 

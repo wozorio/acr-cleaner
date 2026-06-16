@@ -22,4 +22,3 @@ jobs:
           enable-cache: "false"
 
       - uses: astral-sh/ruff-action@v4.0.0
-      - run: ruff check
