@@ -1,5 +1,4 @@
 line-length = 125
-indent-width = 4
 
 [lint]
 select = ["ALL"]
