@@ -19,6 +19,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: 3.12
+          cache-local-path: /tmp/uv_cache_dir # Workaround for https://github.com/hynek/build-and-inspect-python-package/issues/181
 
       - uses: astral-sh/ruff-action@v4.0.0
       - run: ruff check
