@@ -15,11 +15,11 @@
 __author__ = "Wellington Ozorio <wozorio@duck.com>"
 
 import dataclasses
-import datetime
 import logging
 import os
 import re
 import sys
+from datetime import UTC, datetime, timedelta
 
 import click
 import humanize
@@ -179,11 +179,11 @@ def fetch_obsolete_images(
                 order_by=ArtifactManifestOrder.LAST_UPDATED_ON_DESCENDING,
             )
             for manifest in manifests:
-                today = datetime.datetime.now(datetime.timezone.utc)
+                now = datetime.now(tz=UTC)
                 image_last_update = manifest.last_updated_on
-                image_age_days = (today - image_last_update).days
+                image_age_days = (now - image_last_update).days
 
-                if (today - image_last_update) > datetime.timedelta(days=max_image_age_days):
+                if (now - image_last_update) > timedelta(days=max_image_age_days):
                     image_id = f"{registry_uri.removeprefix('https://')}/{repository}@{manifest.digest}"
                     validate_image_id(image_id)
 
